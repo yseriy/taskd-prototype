@@ -1,14 +1,15 @@
-package taskd
+package rabbitmq
 
 import (
 	"testing"
 	"github.com/streadway/amqp"
+	"taskd"
 )
 
 func TestNewPublisher(t *testing.T) {
 	var checkType interface{}
 	amqpChannel := &amqp.Channel{}
-	out := make(<-chan string)
+	out := make(<-chan taskd.Response)
 	stop := make(<-chan struct{})
 
 	publisher := NewPublisher(amqpChannel, out, stop)
@@ -29,11 +30,11 @@ func TestNewPublisher(t *testing.T) {
 		if publisher.amqpChannel != amqpChannel {
 			t.Error("Publishet has bad amqpChannel")
 		}
-		if publisher.outChannel != out {
-			t.Error("Publishet has bad outChannel")
+		if publisher.in != out {
+			t.Error("Publishet has bad in")
 		}
-		if publisher.signalChannel != stop {
-			t.Error("Publishet has bad signalChannel")
+		if publisher.signal != stop {
+			t.Error("Publishet has bad signal")
 		}
 	})
 }
