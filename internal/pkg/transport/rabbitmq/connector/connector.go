@@ -43,6 +43,3 @@ func (connector *connector) dial() (*amqp.Connection, *amqp.Channel, error) {
 	channel, err := connection.Channel()
 	return connection, channel, err
 }
-
-
-
