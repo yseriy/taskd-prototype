@@ -4,36 +4,32 @@ import (
 	"testing"
 	"github.com/streadway/amqp"
 	"time"
-	"taskd"
+	"taskd/internal/pkg/taskd"
 )
 
 func TestNewConsumer(t *testing.T) {
 	var checkType interface{}
 	msg := make(<-chan amqp.Delivery)
 	in := make(chan<- taskd.Request)
-	stop := make(<-chan struct{})
 
-	consumer := NewConsumer(msg, in, stop)
+	c := newConsumer(msg, in)
 	t.Run("TestNewConsumer_Return", func(t *testing.T) {
-		if consumer == nil {
-			t.Fatal("NewConsumer() return nil")
+		if c == nil {
+			t.Fatal("newConsumer() return nil")
 		}
 	})
 	t.Run("TestNewConsumer_ReturnType", func(t *testing.T) {
-		checkType = consumer
-		if _, ok := checkType.(*Consumer); !ok {
-			t.Fatal("NewConsumer() return bad type")
+		checkType = c
+		if _, ok := checkType.(*consumer); !ok {
+			t.Fatal("newConsumer() return bad type")
 		}
 	})
 	t.Run("TestNewConsumer_StructInit", func(t *testing.T) {
-		if consumer.in != msg {
-			t.Error("Consumer has bad messageChannel")
+		if c.in != msg {
+			t.Error("c has bad messageChannel")
 		}
-		if consumer.out != in {
-			t.Error("Consumer has bad inChannel")
-		}
-		if consumer.signal != stop {
-			t.Error("Consumer has bad signal")
+		if c.outStream != in {
+			t.Error("c has bad inChannel")
 		}
 	})
 }
@@ -47,15 +43,14 @@ func TestConsumer_Run(t *testing.T) {
 	stopSignal := struct{}{}
 	delivery := amqp.Delivery{Body: []byte(testBody)}
 
-	consumer := Consumer{
-		in:     messageChannel,
-		out:    inChannel,
-		signal: signalChannel,
+	consumer := consumer{
+		in:        messageChannel,
+		outStream: inChannel,
 	}
 
 	t.Run("TestConsumer_Run_SuccessWay", func(t *testing.T) {
 		var request taskd.Request
-		go consumer.Run()
+		go consumer.run()
 
 		for i := 0; i < 5; i++ {
 			messageChannel <- delivery
@@ -69,7 +64,7 @@ func TestConsumer_Run(t *testing.T) {
 	})
 
 	t.Run("TestConsumer_Run_LockOnSend", func(t *testing.T) {
-		go consumer.Run()
+		go consumer.run()
 
 		messageChannel <- delivery
 		time.Sleep(time.Second)
@@ -78,7 +73,7 @@ func TestConsumer_Run(t *testing.T) {
 	})
 
 	t.Run("TestConsumer_Run_LockOnReceive", func(t *testing.T) {
-		go consumer.Run()
+		go consumer.run()
 
 		signalChannel <- stopSignal
 		time.Sleep(2 * time.Second)

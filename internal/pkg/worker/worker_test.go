@@ -1,4 +1,4 @@
-package taskd
+package worker
 
 import (
 	"testing"
