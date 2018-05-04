@@ -6,23 +6,37 @@ import (
 )
 
 type publisher struct {
-	inStream  <-chan taskd.Response
-	connector OutputConnector
-	converter Converter
+	inStream         <-chan taskd.Response
+	connector        dialer
+	converter        Converter
+	queueTemplate    destinationQueueTemplate
+	publishingParams publishingParams
 }
 
-func newPublisher(inStream <-chan taskd.Response, connector OutputConnector, converter Converter) *publisher {
+func newPublisher(inStream <-chan taskd.Response, connector dialer, converter Converter) *publisher {
 	return &publisher{inStream: inStream, connector: connector, converter: converter}
 }
 
 func (publisher *publisher) run() {
 	for {
-		helper, err := publisher.connector.Connect()
+		helper, err := publisher.connect()
 		if err != nil {
 			break
 		}
 		publisher.handler(helper)
 	}
+}
+
+func (publisher *publisher) connect() (*sendHelper, error) {
+	connection, err := publisher.connector.dial()
+	if err != nil {
+		return nil, err
+	}
+	channel, err := connection.Channel()
+	if err != nil {
+		return nil, err
+	}
+	return newSendHelper(channel, publisher.queueTemplate, publisher.publishingParams), nil
 }
 
 func (publisher *publisher) handler(helper SendHelper) {
