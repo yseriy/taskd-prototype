@@ -1,10 +1,10 @@
-package rabbitmq
+package transport
 
 import (
 	"testing"
 	"github.com/streadway/amqp"
 	"time"
-	"taskd/internal/pkg/taskd"
+	"taskd/internal/taskd"
 )
 
 func TestNewConsumer(t *testing.T) {

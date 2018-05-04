@@ -1,18 +1,17 @@
-package rabbitmq
+package transport
 
 import (
 	"github.com/streadway/amqp"
-	"taskd/internal/pkg/taskd"
-	"taskd/internal/pkg/transport/rabbitmq/connector"
+	"taskd/internal/taskd"
 )
 
 type consumer struct {
 	outStream chan<- taskd.Request
-	connector connector.InputConnector
-	converter converter
+	connector InputConnector
+	converter Converter
 }
 
-func newConsumer(outStream chan<- taskd.Request, connector connector.InputConnector, converter converter) *consumer {
+func newConsumer(outStream chan<- taskd.Request, connector InputConnector, converter Converter) *consumer {
 	return &consumer{outStream: outStream, connector: connector, converter: converter}
 }
 
@@ -28,7 +27,11 @@ func (consumer *consumer) run() {
 
 func (consumer *consumer) handler(inputSteam <-chan amqp.Delivery) {
 	for delivery := range inputSteam {
-		request := consumer.converter.fromDelivery(&delivery)
+		request, err := consumer.converter.fromDelivery(&delivery)
+		if err != nil {
+			//packet drop
+			continue
+		}
 		consumer.outStream <- *request
 	}
 }

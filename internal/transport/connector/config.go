@@ -2,7 +2,7 @@ package connector
 
 import "github.com/streadway/amqp"
 
-type MainQueue struct {
+type mainQueue struct {
 	Name       string
 	Durable    bool
 	AutoDelete bool
@@ -11,7 +11,7 @@ type MainQueue struct {
 	Args       amqp.Table
 }
 
-type ConsumeParams struct {
+type consumeParams struct {
 	Name      string
 	AutoAck   bool
 	Exclusive bool
@@ -20,7 +20,7 @@ type ConsumeParams struct {
 	Args      amqp.Table
 }
 
-type DestinationQueueTemplate struct {
+type destinationQueueTemplate struct {
 	Durable    bool
 	AutoDelete bool
 	Exclusive  bool
@@ -28,6 +28,6 @@ type DestinationQueueTemplate struct {
 	Args       amqp.Table
 }
 
-type PublishingParams struct {
+type publishingParams struct {
 	Mandatory, Immediate bool
 }
