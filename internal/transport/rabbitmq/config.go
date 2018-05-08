@@ -1,14 +1,14 @@
-package taskd
+package rabbitmq
 
 import "github.com/streadway/amqp"
 
 type RabbitConfig struct {
 	Url                      string
 	Timeout                  int
-	MainQueue                *MainQueue
-	ConsumeParams            *ConsumeParams
-	DestinationQueueTemplate *DestinationQueueTemplate
-	PublishingParams         *PublishingParams
+	MainQueue                MainQueue
+	ConsumeParams            ConsumeParams
+	DestinationQueueTemplate DestinationQueueTemplate
+	PublishingParams         PublishingParams
 }
 
 type MainQueue struct {

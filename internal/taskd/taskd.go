@@ -2,20 +2,18 @@ package taskd
 
 import (
 	"sync"
-	"taskd/internal/transport"
 )
 
 type taskd struct {
 	requestStream  chan Request
 	responseStream chan Response
-	transport      Transport
+	transport      transport
 }
 
 func NewTaskd() *taskd {
 	return &taskd{
 		requestStream:  make(chan Request),
 		responseStream: make(chan Response),
-		transport: transport.New()
 	}
 }
 

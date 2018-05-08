@@ -1,5 +1,5 @@
 package taskd
 
-type Transport interface {
+type transport interface {
 	Connect(chan<- Request, <-chan Response)
 }
