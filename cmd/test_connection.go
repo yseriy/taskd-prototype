@@ -27,32 +27,54 @@ func main() {
 	//	}
 	//}()
 
-	confirm := ch.NotifyPublish(make(chan amqp.Confirmation))
-	go func() {
-		for {
-			err, ok := <-confirm
-			if !ok {
-				break
-			}
-			log.Print("p7 ", err.DeliveryTag, "---------------->", err.Ack)
-		}
-	}()
+	// if err := ch.Confirm(false); err != nil {
+	// 	log.Fatal(err)
+	// }
+	//
+	// confirm := ch.NotifyPublish(make(chan amqp.Confirmation))
+	// go func() {
+	// 	for {
+	// 		err, ok := <-confirm
+	// 		if !ok {
+	// 			break
+	// 		}
+	// 		log.Print("p7 ", err.DeliveryTag, "---------------->", err.Ack)
+	// 	}
+	// }()
 
-	if err := ch.Confirm(false); err != nil {
-		log.Fatal(err)
-	}
+	// ret := ch.NotifyReturn(make(chan amqp.Return))
+	// go func() {
+	// 	for {
+	// 		r, ok := <-ret
+	// 		if !ok {
+	// 			break
+	// 		}
+	// 		log.Print("p8 ", r)
+	// 	}
+	// }()
 
-	time.Sleep(2 * time.Second)
+	// time.Sleep(2 * time.Second)
 
 	//log.Print("start sleep")
 	//time.Sleep(30 * time.Second)
 	//log.Print("stop sleep")
 
-	//_, err = ch.QueueDeclare("test_queue", true, false, false, false, nil)
-	//if err != nil {
-	//	log.Print("p1 ", err)
-	//}
+	close := ch.NotifyClose(make(chan *amqp.Error, 1))
+	log.Print("P2")
 
+	time.Sleep(30 * time.Second)
+
+	_, err = ch.QueueDeclare("test_queue", false, false, false, false, nil)
+	if err != nil {
+		log.Print("p1 ", err)
+		closeError := <-close
+		log.Print(closeError)
+	}
+	log.Print("P3")
+	d, ok:= <-close
+	if !ok {
+		log.Print("closed", d)
+	}
 	//time.Sleep(2 * time.Second)
 
 	//ch, err = conn.Channel()
@@ -67,15 +89,15 @@ func main() {
 	//
 	//<-msg
 
-	for i := 0; i < 9; i++ {
-		err = ch.Publish("", "testr", true, false, amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte("test_msg"),
-		})
-		if err != nil {
-			log.Fatal("p2 ", err)
-		}
-	}
+	// for i := 0; i < 10; i++ {
+	// 	err = ch.Publish("", "testr", true, false, amqp.Publishing{
+	// 		ContentType: "text/plain",
+	// 		Body:        []byte("test_msg"),
+	// 	})
+	// 	if err != nil {
+	// 		log.Fatal("p2 ", err)
+	// 	}
+	// }
 
 	time.Sleep(2 * time.Second)
 	ch.Close()
