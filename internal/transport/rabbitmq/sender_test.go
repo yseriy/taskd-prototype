@@ -8,33 +8,41 @@ import (
 )
 
 func TestSender_Send(t *testing.T) {
-	setupSuccessWay := func(controller *gomock.Controller, queue Queue,
-		message *transport.Message) (channel, connection) {
-		mockChannel := NewMockchannel(controller)
-		mockConnection := NewMockconnection(controller)
-		publishing := amqp.Publishing{
+	testQueue := Queue{}
+	testMessage := transport.Message{}
+	testPublishing := amqp.Publishing{
+		ContentType: testMessage.ContentType,
+		Body:        testMessage.Body,
+	}
+	declareParams := func(queue *Queue) (string, bool, bool, bool, bool, amqp.Table) {
+		return queue.Name, queue.Durable, queue.AutoDelete, queue.Exclusive, false, amqp.Table(queue.Args)
+	}
+	publishParams := func(message *transport.Message) (string, string, bool, bool, amqp.Publishing) {
+		return "", message.Address, false, true, amqp.Publishing{
 			ContentType: message.ContentType,
 			Body:        message.Body,
 		}
+	}
 
-		mockConnection.EXPECT().Channel().Return(mockChannel, nil).Times(1)
+	setupSuccessWay := func(controller *gomock.Controller) (channel, connection) {
+		mockChannel := NewMockchannel(controller)
+		mockConnection := NewMockconnection(controller)
+		mockConnection.EXPECT().Channel().Return(mockChannel, nil).Times(0)
 		gomock.InOrder(
-			mockChannel.EXPECT().QueueDeclare(message.Address, queue.Durable, queue.AutoDelete, queue.Exclusive,
-				false, amqp.Table(queue.Args)).Return(nil, nil).Times(1),
-			mockChannel.EXPECT().Publish("", message.Address, true, false,
-				publishing).Return(nil).Times(1),
+			mockChannel.EXPECT().QueueDeclare(testMessage.Address, testQueue.Durable, testQueue.AutoDelete,
+				testQueue.Exclusive, false, amqp.Table(testQueue.Args)).Return(nil, nil).Times(1),
+			mockChannel.EXPECT().Publish("", testMessage.Address, true, false,
+				testPublishing).Return(nil).Times(1),
 		)
-
 		return mockChannel, mockConnection
 	}
 
 	cases := []struct {
-		setupMock     func(controller *gomock.Controller, queue Queue) (channel, connection)
-		inputMessage  *transport.Message
+		setupMock     func(controller *gomock.Controller) (channel, connection)
 		expectedError error
 		testName      string
 	}{
-		{setupMock: setupSuccessWay, testName: "SuccessWay"},
+		{setupMock: setupSuccessWay, expectedError: nil, testName: "SuccessWay"},
 	}
 
 	for _, c := range cases {
@@ -42,10 +50,16 @@ func TestSender_Send(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			mockChannel, mockConnection := c.setupMock(mockCtrl, )
-			sender := &sender{}
+			mockChannel, mockConnection := c.setupMock(mockCtrl)
+			sender := &sender{
+				queue:         testQueue,
+				connection:    mockConnection,
+				channel:       mockChannel,
+				declareParams: declareParams,
+				publishParams: publishParams,
+			}
 
-			err := sender.Send(c.inputMessage)
+			err := sender.Send(&testMessage)
 			if err != c.expectedError {
 				t.Error("sender.Send() return unexpected error")
 			}
